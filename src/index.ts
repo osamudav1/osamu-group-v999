@@ -1,0 +1,51 @@
+import 'dotenv/config';
+import { Telegraf, Context, Markup } from 'telegraf';
+import { connectMongo, Group, Admin, User, ModLog, Permission } from './models';
+import { ownerIds, isOwner, ensureGroup, isApproved, hasPermission, requireApproved } from './services/access';
+import { mainKeyboard, backKeyboard, confirmKeyboard, formatText } from './utils/ui';
+
+const token = process.env.BOT_TOKEN;
+const mongoUri = process.env.MONGODB_URI;
+if (!token || !mongoUri) throw new Error('BOT_TOKEN and MONGODB_URI are required');
+const bot = new Telegraf(token);
+
+const privateOnly = (handler: (ctx: Context) => Promise<any>) => async (ctx: Context): Promise<void> => { if (ctx.chat?.type !== 'private') { await ctx.reply('💙 ဒီ command ကို private chat ထဲမှာ သုံးပါ။'); return; } await handler(ctx); };
+const groupOnly = (handler: (ctx: Context) => Promise<any>) => async (ctx: Context): Promise<void> => { if (!(await requireApproved(ctx))) return; await handler(ctx); };
+async function log(chatId: number, actorId: number, action: string, targetId?: number, reason?: string) { await ModLog.create({ chatId, actorId, targetId, action, reason }); await Group.updateOne({ chatId }, { $inc: { 'stats.actions': 1 } }); }
+async function targetFromReply(ctx: Context): Promise<{ id: number; first_name?: string; username?: string } | null> { const msg: any = ctx.message; return msg?.reply_to_message?.from || null; }
+async function adminAction(ctx: Context, action: 'ban' | 'unban' | 'mute' | 'unmute' | 'warn' | 'purge') {
+  const chatId = ctx.chat?.id; const actorId = ctx.from?.id; if (!chatId || !actorId || !(await hasPermission(chatId, actorId, 'moderate'))) return ctx.reply('⛔ ဒီ action အတွက် permission မရှိပါ။');
+  const target = await targetFromReply(ctx); if (!target) return ctx.reply('↩️ Target member ရဲ့ message ကို reply လုပ်ပြီး command ပေးပါ။');
+  try {
+    if (action === 'ban') await ctx.telegram.banChatMember(chatId, target.id);
+    if (action === 'unban') await ctx.telegram.unbanChatMember(chatId, target.id, { only_if_banned: true });
+    if (action === 'mute') await ctx.telegram.restrictChatMember(chatId, target.id, { permissions: { can_send_messages: false } });
+    if (action === 'unmute') await ctx.telegram.restrictChatMember(chatId, target.id, { permissions: { can_send_messages: true, can_send_audios: true, can_send_documents: true, can_send_photos: true, can_send_videos: true, can_send_video_notes: true, can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true, can_add_web_page_previews: true } });
+    if (action === 'warn') { await User.findOneAndUpdate({ userId: target.id }, { $inc: { warnings: 1 } }, { upsert: true }); await Group.updateOne({ chatId }, { $inc: { 'stats.warnings': 1 } }); }
+    if (action === 'purge') { const msg: any = ctx.message; if (msg?.reply_to_message?.message_id) await ctx.telegram.deleteMessage(chatId, msg.reply_to_message.message_id); }
+    await log(chatId, actorId, action, target.id); return ctx.reply(`✅ ${action.toUpperCase()} ပြီးပါပြီ — ${target.first_name || target.id}`);
+  } catch { return ctx.reply('⚠️ Telegram permission မလုံလောက်ခြင်း သို့မဟုတ် action မအောင်မြင်ပါ။'); }
+}
+
+bot.start(async ctx => { await ensureGroup(ctx); await ctx.replyWithMarkdown('💙 *OSAMU GROUP V999*\nPremium group protection & help center\n\nGroup ထဲထည့်ပြီး `/setup` လုပ်ပါ။ Owner approval မရှိဘဲ feature များ အသုံးမပြုနိုင်ပါ။', { reply_markup: mainKeyboard() }); });
+bot.command('request_access', async ctx => { const chat = ctx.chat; const who = ctx.from; if (!chat || !who) return; await ensureGroup(ctx); const g = await Group.findOne({ chatId: chat.id }); if (g?.approved) return ctx.reply('✅ ဒီ group က approve ဖြစ်ပြီးသားပါ။'); for (const ownerId of ownerIds) await ctx.telegram.sendMessage(ownerId, `🔔 Access request\nGroup: ${(chat as any).title || chat.id}\nRequester: ${who.first_name} (${who.id})`, Markup.inlineKeyboard([[Markup.button.callback('✅ Approve', `owner:approve:${chat.id}`), Markup.button.callback('❌ Reject', `owner:reject:${chat.id}`)]])); await ctx.reply('📨 Owner ဆီ approval request ပို့ပြီးပါပြီ။'); });
+bot.command('setup', groupOnly(async ctx => { const g = await ensureGroup(ctx); if (!g) return; if (!isOwner(ctx.from?.id)) return ctx.reply('👑 Owner approval မရသေးပါ။ `/request_access` သုံးပါ။'); await Group.updateOne({ chatId: ctx.chat!.id }, { $set: { approved: true, approvedBy: ctx.from!.id, approvedAt: new Date() } }); await ctx.reply('✅ Group approved & activated', { reply_markup: mainKeyboard() }); }));
+bot.command('panel', privateOnly(async ctx => { if (!isOwner(ctx.from?.id)) return ctx.reply('⛔ Owner only panel'); await ctx.reply('👑 *OWNER CONTROL CENTER*\nBlue Edition', { parse_mode: 'Markdown', reply_markup: mainKeyboard() }); }));
+bot.command('help', groupOnly(async ctx => { await ctx.reply('📖 *COMMAND CENTER*\n\n`/panel` — owner panel\n`/setup` — approve group\n`/request_access` — request owner approval\n`/warn`, `/mute`, `/unmute`, `/ban`, `/unban`, `/purge` — reply-based moderation\n`/setwelcome` — welcome format\n`/filters` — filters menu\n`/stats` — group statistics', { parse_mode: 'Markdown', reply_markup: mainKeyboard() }); }));
+for (const cmd of ['warn', 'mute', 'unmute', 'ban', 'unban', 'purge'] as const) bot.command(cmd, groupOnly(ctx => adminAction(ctx, cmd)));
+bot.command('stats', groupOnly(async ctx => { const g = await Group.findOne({ chatId: ctx.chat!.id }); const members = await User.countDocuments(); await ctx.reply(`📊 *BLUE ANALYTICS*\n\n👥 User records: ${members}\n👋 Joins: ${g?.stats.joins || 0}\n🚨 Warnings: ${g?.stats.warnings || 0}\n🛡 Actions: ${g?.stats.actions || 0}`, { parse_mode: 'Markdown', reply_markup: backKeyboard() }); }));
+bot.command('setwelcome', groupOnly(async ctx => { const chatId = ctx.chat!.id; if (!(await hasPermission(chatId, ctx.from!.id, 'welcome'))) return ctx.reply('⛔ welcome permission မရှိပါ။'); const text = (ctx.message as any).text.split(' ').slice(1).join(' '); if (!text) return ctx.reply('Format: `/setwelcome မင်္ဂလာပါ {mention} {first_name}`', { parse_mode: 'Markdown' }); await Group.updateOne({ chatId }, { $set: { 'settings.welcomeText': text } }); await ctx.reply(`✅ Welcome format သိမ်းပြီးပါပြီ\n\n${formatText(text, { user: ctx.from, chatTitle: (ctx.chat as any).title })}`, { parse_mode: 'Markdown' }); }));
+
+bot.command('setwelcomephoto', groupOnly(async ctx => { const chatId = ctx.chat!.id; if (!(await hasPermission(chatId, ctx.from!.id, 'welcome'))) return ctx.reply('⛔ welcome permission မရှိပါ။'); const replied: any = (ctx.message as any).reply_to_message; const photo = replied?.photo?.at(-1); if (!photo) return ctx.reply('🖼️ Photo message ကို reply လုပ်ပြီး `/setwelcomephoto` ပေးပါ။'); await Group.updateOne({ chatId }, { $set: { 'settings.welcomePhoto': photo.file_id } }); await ctx.reply('✅ Welcome photo သိမ်းပြီးပါပြီ။'); }));
+bot.on('new_chat_members', async ctx => { if (!(await isApproved(ctx.chat.id))) return; const g = await Group.findOne({ chatId: ctx.chat.id }); for (const member of (ctx.message as any).new_chat_members) { await User.findOneAndUpdate({ userId: member.id }, { $set: { firstName: member.first_name, username: member.username }, $inc: {} }, { upsert: true }); await Group.updateOne({ chatId: ctx.chat.id }, { $inc: { 'stats.joins': 1 } }); const text = formatText(g?.settings.welcomeText || 'မင်္ဂလာပါ {mention} 💙', { user: member, chatTitle: (ctx.chat as any).title }); await ctx.replyWithMarkdown(text, { reply_markup: Markup.inlineKeyboard([[Markup.button.callback('✅ Verify', `verify:${member.id}`), Markup.button.callback('📖 Rules', 'menu:rules')]]).reply_markup }); } });
+bot.on('text', async ctx => { if (ctx.chat?.type === 'private' || !(await isApproved(ctx.chat?.id))) return; const text = (ctx.message as any).text as string; const g = await Group.findOne({ chatId: ctx.chat!.id }); if (g?.settings.linkFilter && /(https?:\/\/|t\.me\/|www\.)/i.test(text) && !(await hasPermission(ctx.chat!.id, ctx.from.id, 'filters'))) { try { await ctx.deleteMessage(); } catch {} await log(ctx.chat!.id, 0, 'link_filter', ctx.from.id); } });
+
+bot.action(/^owner:(approve|reject):(-?\d+)$/, async ctx => { if (!isOwner(ctx.from.id)) return ctx.answerCbQuery('Owner only'); const action = ctx.match[1]; const chatId = Number(ctx.match[2]); await Group.updateOne({ chatId }, action === 'approve' ? { $set: { approved: true, approvedBy: ctx.from.id, approvedAt: new Date() } } : { $set: { approved: false } }, { upsert: true }); await ctx.editMessageText(action === 'approve' ? '✅ Group approved.' : '❌ Request rejected.'); await ctx.answerCbQuery(); });
+bot.action(/^verify:(\d+)$/, async ctx => { if (ctx.from.id !== Number(ctx.match[1])) return ctx.answerCbQuery('ဒီ button က သင့်အတွက်မဟုတ်ပါ။'); await ctx.editMessageText(`✅ Verified — ${ctx.from.first_name} ကြိုဆိုပါတယ် 💙`); await ctx.answerCbQuery('Verified'); });
+bot.action('menu:main', async ctx => { await ctx.editMessageText('💙 *OSAMU GROUP V999*\nSelect a control module', { parse_mode: 'Markdown', reply_markup: mainKeyboard() }); await ctx.answerCbQuery(); });
+bot.action(/^menu:(.+)$/, async ctx => { const key = ctx.match[1]; const labels: Record<string, string> = { moderation: '🛡 Moderation\nBan, mute, warn, purge, slow mode, locks', welcome: '👋 Welcome Center\nPhoto, format variables, verification, rules', security: '🚨 Security\nAnti-spam, link filter, bad words, anti-raid', members: '👥 Members\nRoles, permissions, notes, blacklist, whitelist', points: '🏆 Points & Levels\nXP, rewards, leaderboard, badges', analytics: '📊 Analytics\nJoins, leaves, warnings, actions, reports', tickets: '🎫 Tickets\nReports, support queue, staff assignment', settings: '⚙ Settings\nLanguage, theme, logs, feature toggles', help: '📖 Help\nUse buttons and reply-based commands' }; await ctx.editMessageText(`💙 *${labels[key] || 'Control Center'}*`, { parse_mode: 'Markdown', reply_markup: backKeyboard() }); await ctx.answerCbQuery(); });
+bot.action('ui:close', async ctx => { await ctx.deleteMessage().catch(() => undefined); await ctx.answerCbQuery(); });
+
+bot.catch((err) => console.error('Bot error:', err));
+(async () => { await connectMongo(mongoUri); await bot.launch(); console.log('OSAMU GROUP V999 started'); })();
+process.once('SIGINT', () => bot.stop('SIGINT')); process.once('SIGTERM', () => bot.stop('SIGTERM'));
