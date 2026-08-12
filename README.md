@@ -35,6 +35,9 @@ For development, use `npm run dev`.
 | `/purge` | Reply to a message and delete it |
 | `/setwelcome <text>` | Set the welcome template |
 | `/stats` | Show group activity statistics |
+| `/setwelcomephoto` | Reply to a photo with this command to save it as the welcome photo |
+| `/grant <permission>` | Owner replies to a member and grants one permission |
+| `/revoke <permission>` | Owner replies to a member and removes one permission |
 
 ## Welcome placeholders
 
@@ -51,7 +54,7 @@ Telegram inline buttons cannot have arbitrary custom colors. The bot uses blue-t
 
 ## Permission model
 
-Permissions are stored per group and per admin in MongoDB. Available permission keys are `manage_settings`, `moderate`, `filters`, `welcome`, `broadcast`, `tickets`, `analytics`, `custom_commands`, `points`, and `logs`. Owner IDs always bypass permission checks; normal admins do not.
+Permissions are stored per group and per admin in MongoDB. Available permission keys are `manage_settings`, `moderate`, `filters`, `welcome`, `broadcast`, `tickets`, `analytics`, `custom_commands`, `points`, and `logs`. Example: reply to an admin message with `/grant moderate`; later use `/revoke moderate` to remove only that permission. Owner IDs always bypass permission checks; normal admins do not.
 
 ## Planned expansion modules
 
