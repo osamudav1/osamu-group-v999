@@ -55,7 +55,7 @@ bot.action(/^owner:(overview|moderation|permissions|welcome|security|broadcast|s
 bot.action('owner:groups', async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
     return ctx.answerCbQuery('Owner only'); const groups = await models_1.Group.find({}).sort({ updatedAt: -1 }).limit(30); const rows = groups.length ? groups.map(g => [telegraf_1.Markup.button.callback(`${g.approved ? '🟢' : '🔴'} ${g.title || g.chatId}`, `owner:group:${g.chatId}`)]) : [[telegraf_1.Markup.button.callback('No groups yet', 'ui:close')]]; await ctx.editMessageText('🗂 *MANAGED GROUPS*\nSelect a group', { parse_mode: 'Markdown', ...telegraf_1.Markup.inlineKeyboard([...rows, [telegraf_1.Markup.button.callback('🔙 Back', 'owner:home')]]) }); await ctx.answerCbQuery(); });
 bot.action(/^owner:group:(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
-    return ctx.answerCbQuery('Owner only'); const chatId = Number(ctx.match[1]); const g = await models_1.Group.findOne({ chatId }); await ctx.editMessageText(`💙 *GROUP CONTROL*\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Pending'}`, { parse_mode: 'Markdown', ...groupPanel(chatId) }); await ctx.answerCbQuery(); });
+    return ctx.answerCbQuery('Owner only'); const chatId = Number(ctx.match[1]); const g = await models_1.Group.findOne({ chatId }); await ctx.editMessageText(`💙 GROUP CONTROL\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Pending'}`, { ...groupPanel(chatId) }); await ctx.answerCbQuery('Opened'); });
 bot.action(/^owner:(approve|reject):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
     return ctx.answerCbQuery('Owner only'); const approved = ctx.match[1] === 'approve'; const chatId = Number(ctx.match[2]); await models_1.Group.updateOne({ chatId }, { $set: { approved, approvedBy: ctx.from.id, approvedAt: new Date() } }, { upsert: true }); await ctx.answerCbQuery(approved ? 'Approved' : 'Rejected'); await ctx.editMessageText(approved ? '✅ Group approved and activated.' : '❌ Group rejected.', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🗂 Open groups', 'owner:groups'), telegraf_1.Markup.button.callback('🔙 Owner menu', 'owner:home')]]) }); });
 bot.action(/^group:(home|moderation|welcome|security|admins|points|analytics|approve|disable):(-?\d+)$/, async (ctx) => {
@@ -68,11 +68,11 @@ bot.action(/^group:(home|moderation|welcome|security|admins|points|analytics|app
         await log(chatId, ctx.from.id, mode === 'approve' ? 'group_approved' : 'group_disabled');
         await ctx.answerCbQuery(mode === 'approve' ? 'Approved' : 'Disabled');
         const g = await models_1.Group.findOne({ chatId });
-        return ctx.editMessageText(`💙 *GROUP CONTROL*\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Disabled'}`, { parse_mode: 'Markdown', ...groupPanel(chatId) });
+        return ctx.editMessageText(`💙 GROUP CONTROL\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Disabled'}`, { ...groupPanel(chatId) });
     }
     if (mode === 'home') {
         const g = await models_1.Group.findOne({ chatId });
-        await ctx.editMessageText(`💙 *GROUP CONTROL*\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Pending'}`, { parse_mode: 'Markdown', ...groupPanel(chatId) });
+        await ctx.editMessageText(`💙 GROUP CONTROL\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Pending'}`, { ...groupPanel(chatId) });
     }
     else if (mode === 'security')
         await ctx.editMessageText('🚨 *SECURITY CENTER*\nToggle protections below', { parse_mode: 'Markdown', ...togglePanel(chatId) });
@@ -120,7 +120,11 @@ else
     await models_1.Admin.updateOne({ chatId, userId }, { $set: { active: false } }); await log(chatId, ctx.from.id, `admin_${action}`, userId); await ctx.answerCbQuery(`${action} complete`); await ctx.editMessageText(`✅ ${displayName} ${action === 'grant' ? 'ကို Moderator permission ပေးပြီးပါပြီ။' : 'ကို revoke လုပ်ပြီးပါပြီ။'}`, { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('👮 Admin menu', `group:admins:${chatId}`), telegraf_1.Markup.button.callback('🏠 Group menu', `group:home:${chatId}`)]]) }); });
 bot.action(/^verify:(\d+)$/, async (ctx) => { if (ctx.from.id !== Number(ctx.match[1]))
     return ctx.answerCbQuery('Not your button'); await ctx.editMessageText(`✅ Verified — ${ctx.from.first_name} ကြိုဆိုပါတယ် 💙`); await ctx.answerCbQuery('Verified'); });
-bot.action('ui:close', async (ctx) => { await ctx.deleteMessage().catch(() => undefined); await ctx.answerCbQuery(); });
+bot.action('ui:close', async (ctx) => { await ctx.answerCbQuery('Closed'); await ctx.deleteMessage().catch(() => undefined); });
+bot.on('callback_query', async (ctx) => { try {
+    await ctx.answerCbQuery('ဒီ button action မရှိသေးပါ။');
+}
+catch { } });
 bot.catch(err => console.error('Bot error:', err));
 const healthServer = node_http_1.default.createServer((req, res) => { if (req.url === '/health' || req.url === '/') {
     res.writeHead(200, { 'content-type': 'application/json' });
