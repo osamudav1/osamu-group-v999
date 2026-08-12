@@ -4,9 +4,9 @@ Premium blue-style Telegram Group Help & Moderation Bot powered by **Node.js, Ty
 
 ## Core behavior
 
-This bot uses an owner-first approval model. A group must send `/request_access`, and only an account listed in `OWNER_IDS` can approve it. Until approval, group features are blocked. After approval, the owner can grant individual permissions to admins instead of giving every admin full control.
+This bot uses an owner-first approval model. When the bot is added to a group, it automatically sends an approval request to the accounts listed in `OWNER_IDS`. Until approval, group features are blocked. After approval, the owner can grant individual permissions to admins instead of giving every admin full control.
 
-The current foundation includes owner approval, owner panel, granular moderation permissions, reply-based ban/mute/warn/unban/purge, welcome messages, verification buttons, link filtering, mod logs, analytics, MongoDB persistence, nested inline-button menus, and a blue premium visual style.
+The current foundation includes owner approval, owner panel, granular moderation permissions, button-only group controls, welcome templates, verification buttons, link filtering, mod logs, analytics, MongoDB persistence, nested inline-button menus, and a blue premium visual style. No slash commands are required for the interaction flow.
 
 ## Setup
 
@@ -15,29 +15,24 @@ The current foundation includes owner approval, owner panel, granular moderation
 3. Set `BOT_TOKEN`, `MONGODB_URI`, and comma-separated numeric `OWNER_IDS`.
 4. Add the bot to a group and grant the administrator permissions it needs to delete messages, restrict members, and ban members.
 5. Run `npm install`, then `npm run build`, then `npm start`.
+6. After the bot is added to a group, use the approval button sent to the owner. The owner then controls the group entirely through inline buttons.
 
 For development, use `npm run dev`.
 
-## Supported commands
+## Button-only interaction map
 
 | Command | Purpose |
 |---|---|
-| `/start` | Open the blue help center |
-| `/request_access` | Ask the owner to approve this group |
-| `/setup` | Owner approves and activates the current group |
-| `/panel` | Owner-only private control panel |
-| `/help` | Open the command center |
-| `/warn` | Reply to a member message and warn |
-| `/mute` | Reply to a member message and mute |
-| `/unmute` | Reply to a member message and unmute |
-| `/ban` | Reply to a member message and ban |
-| `/unban` | Reply to a member message and unban |
-| `/purge` | Reply to a message and delete it |
-| `/setwelcome <text>` | Set the welcome template |
-| `/stats` | Show group activity statistics |
-| `/setwelcomephoto` | Reply to a photo with this command to save it as the welcome photo |
-| `/grant <permission>` | Owner replies to a member and grants one permission |
-| `/revoke <permission>` | Owner replies to a member and removes one permission |
+| Any private message from owner | Opens the owner control center |
+| Group added event | Sends an approval button to the owner |
+| Group approval button | Activates the selected group |
+| Group selector button | Opens per-group controls |
+| Moderation buttons | Opens lock, unlock, purge, and slow-mode controls |
+| Welcome buttons | Selects blue/premium templates and format help |
+| Security toggles | Turns link filter, anti-flood, verification, and auto-delete on/off |
+| Admin buttons | Lists admins and opens permission workflows |
+| Analytics button | Shows joins, warnings, and action statistics |
+| Verification button | Verifies a new member without commands |
 
 ## Welcome placeholders
 
