@@ -9,12 +9,14 @@ const telegraf_1 = require("telegraf");
 const models_1 = require("./models");
 const access_1 = require("./services/access");
 const ui_1 = require("./utils/ui");
+const moderation_1 = require("./moderation");
 const token = process.env.BOT_TOKEN;
 const mongoUri = process.env.MONGODB_URI;
 const port = Number(process.env.PORT || 10000);
 if (!token || !mongoUri)
     throw new Error('BOT_TOKEN and MONGODB_URI are required');
 const bot = new telegraf_1.Telegraf(token);
+(0, moderation_1.installModerationHandlers)(bot);
 const ownerPanel = () => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🗂 Groups', 'owner:groups'), telegraf_1.Markup.button.callback('📊 Overview', 'owner:overview')], [telegraf_1.Markup.button.callback('🛡 Moderation', 'owner:moderation'), telegraf_1.Markup.button.callback('👮 Permissions', 'owner:permissions')], [telegraf_1.Markup.button.callback('👋 Welcome', 'owner:welcome'), telegraf_1.Markup.button.callback('🚨 Security', 'owner:security')], [telegraf_1.Markup.button.callback('📢 Broadcast', 'owner:broadcast'), telegraf_1.Markup.button.callback('⚙ Global Settings', 'owner:settings')]]);
 const groupPanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🛡 Moderation', `group:moderation:${chatId}`), telegraf_1.Markup.button.callback('👋 Welcome', `group:welcome:${chatId}`)], [telegraf_1.Markup.button.callback('🚨 Security', `group:security:${chatId}`), telegraf_1.Markup.button.callback('👮 Admins', `group:admins:${chatId}`)], [telegraf_1.Markup.button.callback('🏆 Points', `group:points:${chatId}`), telegraf_1.Markup.button.callback('📊 Analytics', `group:analytics:${chatId}`)], [telegraf_1.Markup.button.callback('✅ Approve', `group:approve:${chatId}`), telegraf_1.Markup.button.callback('🔴 Disable', `group:disable:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Owner menu', 'owner:home')]]);
 const togglePanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔗 Link Filter', `toggle:link:${chatId}`), telegraf_1.Markup.button.callback('🌊 Anti-Flood', `toggle:flood:${chatId}`)], [telegraf_1.Markup.button.callback('🤖 Verification', `toggle:verify:${chatId}`), telegraf_1.Markup.button.callback('🧹 Auto Delete', `toggle:autodelete:${chatId}`)], [telegraf_1.Markup.button.callback('🚨 Anti-Raid', `toggle:raid:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Group menu', `group:home:${chatId}`)]]);
@@ -70,6 +72,27 @@ bot.on('text', async (ctx) => { if (!(0, access_1.isOwner)(ctx.from?.id))
     await models_1.Group.updateOne({ chatId: urlChatId }, { $set: { 'settings.welcomeUrlButtons': true, 'settings.welcomeButtons': buttons } });
     pendingWelcomeUrl.delete(ctx.from.id);
     return ctx.reply(`✅ URL button သိမ်းပြီးပါပြီ။\\n\\n${label}`, { reply_markup: (0, ui_1.backKeyboard)(`group:welcome:${urlChatId}`) });
+} });
+bot.on('new_chat_members', async (ctx) => { const chat = ctx.chat; if (chat.type !== 'group' && chat.type !== 'supergroup')
+    return; const group = await models_1.Group.findOne({ chatId: chat.id }); if (!group?.approved || group.settings?.welcome === false)
+    return; const members = ctx.message.new_chat_members || []; const total = Number(group.stats?.joins || 0) + members.length; await models_1.Group.updateOne({ chatId: chat.id }, { $inc: { 'stats.joins': members.length } }); const buttons = Array.isArray(group.settings?.welcomeButtons) ? group.settings.welcomeButtons.filter(button => button.text && /^https?:\/\//i.test(button.url)).map(button => [telegraf_1.Markup.button.url(button.text, button.url)]) : []; for (const member of members) {
+    const welcomeText = (0, ui_1.formatText)(group.settings?.welcomeText || 'မင်္ဂလာပါ {mention} 💙\\n{chat_title} မှ ကြိုဆိုပါတယ်။', { user: { id: member.id, first_name: member.first_name, username: member.username }, chatTitle: chat.title, count: total });
+    const replyMarkup = buttons.length ? telegraf_1.Markup.inlineKeyboard(buttons) : undefined;
+    try {
+        if (group.settings?.welcomePhoto)
+            await ctx.replyWithPhoto(group.settings.welcomePhoto, { caption: welcomeText, ...replyMarkup });
+        else
+            await ctx.reply(welcomeText, replyMarkup);
+    }
+    catch (error) {
+        console.error('Welcome delivery failed:', error);
+        try {
+            await ctx.reply(welcomeText);
+        }
+        catch (fallbackError) {
+            console.error('Welcome text fallback failed:', fallbackError);
+        }
+    }
 } });
 bot.on('message', async (ctx) => { if (ctx.chat?.type === 'private') {
     if ((0, access_1.isOwner)(ctx.from?.id))
