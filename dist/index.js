@@ -18,7 +18,8 @@ const bot = new telegraf_1.Telegraf(token);
 const ownerPanel = () => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🗂 Groups', 'owner:groups'), telegraf_1.Markup.button.callback('📊 Overview', 'owner:overview')], [telegraf_1.Markup.button.callback('🛡 Moderation', 'owner:moderation'), telegraf_1.Markup.button.callback('👮 Permissions', 'owner:permissions')], [telegraf_1.Markup.button.callback('👋 Welcome', 'owner:welcome'), telegraf_1.Markup.button.callback('🚨 Security', 'owner:security')], [telegraf_1.Markup.button.callback('📢 Broadcast', 'owner:broadcast'), telegraf_1.Markup.button.callback('⚙ Global Settings', 'owner:settings')]]);
 const groupPanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🛡 Moderation', `group:moderation:${chatId}`), telegraf_1.Markup.button.callback('👋 Welcome', `group:welcome:${chatId}`)], [telegraf_1.Markup.button.callback('🚨 Security', `group:security:${chatId}`), telegraf_1.Markup.button.callback('👮 Admins', `group:admins:${chatId}`)], [telegraf_1.Markup.button.callback('🏆 Points', `group:points:${chatId}`), telegraf_1.Markup.button.callback('📊 Analytics', `group:analytics:${chatId}`)], [telegraf_1.Markup.button.callback('✅ Approve', `group:approve:${chatId}`), telegraf_1.Markup.button.callback('🔴 Disable', `group:disable:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Owner menu', 'owner:home')]]);
 const togglePanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔗 Link Filter', `toggle:link:${chatId}`), telegraf_1.Markup.button.callback('🌊 Anti-Flood', `toggle:flood:${chatId}`)], [telegraf_1.Markup.button.callback('🤖 Verification', `toggle:verify:${chatId}`), telegraf_1.Markup.button.callback('🧹 Auto Delete', `toggle:autodelete:${chatId}`)], [telegraf_1.Markup.button.callback('🚨 Anti-Raid', `toggle:raid:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Group menu', `group:home:${chatId}`)]]);
-const welcomePanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('💙 Blue Welcome', `welcome:blue:${chatId}`), telegraf_1.Markup.button.callback('✨ Premium Welcome', `welcome:premium:${chatId}`)], [telegraf_1.Markup.button.callback('🧾 Format Help', `welcome:format:${chatId}`), telegraf_1.Markup.button.callback('🖼️ Save Photo', `welcome:photo:${chatId}`)], [telegraf_1.Markup.button.callback('🔘 Verification Button', `welcome:verify:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Group menu', `group:home:${chatId}`)]]);
+const welcomePanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('📄 Text ✅', `welcome:text:${chatId}`), telegraf_1.Markup.button.callback('👀 See', `welcome:see:${chatId}`)], [telegraf_1.Markup.button.callback('📸 Media ✅', `welcome:media:${chatId}`), telegraf_1.Markup.button.callback('👀 See', `welcome:mediasee:${chatId}`)], [telegraf_1.Markup.button.callback('🔤 URL Buttons ✅', `welcome:url:${chatId}`), telegraf_1.Markup.button.callback('👀 See', `welcome:urlsee:${chatId}`)], [telegraf_1.Markup.button.callback('🖼️ Media below text ❌', `welcome:below:${chatId}`)], [telegraf_1.Markup.button.callback('👀 Full preview', `welcome:preview:${chatId}`)], [telegraf_1.Markup.button.callback('🗂 Select a Topic 🆕', `welcome:topic:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Back', `group:home:${chatId}`)]]);
+const settingsPanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('📜 Regulation', `set:regulation:${chatId}`), telegraf_1.Markup.button.callback('📨 Anti-Spam', `set:antispam:${chatId}`)], [telegraf_1.Markup.button.callback('💬 Welcome', `group:welcome:${chatId}`), telegraf_1.Markup.button.callback('🌊 Anti-Flood', `set:antiflood:${chatId}`)], [telegraf_1.Markup.button.callback('👋 Goodbye', `set:goodbye:${chatId}`), telegraf_1.Markup.button.callback('🕉 Alphabets', `set:alphabets:${chatId}`)], [telegraf_1.Markup.button.callback('🧠 Captcha', `set:captcha:${chatId}`), telegraf_1.Markup.button.callback('🔦 Checks', `set:checks:${chatId}`)], [telegraf_1.Markup.button.callback('🆘 @Admin', `set:admin:${chatId}`), telegraf_1.Markup.button.callback('🔐 Blocks', `set:blocks:${chatId}`)], [telegraf_1.Markup.button.callback('📸 Media', `set:media:${chatId}`), telegraf_1.Markup.button.callback('🔞 Porn', `set:porn:${chatId}`)], [telegraf_1.Markup.button.callback('❗ Warns', `set:warns:${chatId}`), telegraf_1.Markup.button.callback('🌙 Night', `set:night:${chatId}`)], [telegraf_1.Markup.button.callback('🔔 Tag', `set:tag:${chatId}`), telegraf_1.Markup.button.callback('🔗 Link', `set:link:${chatId}`)], [telegraf_1.Markup.button.callback('🕵️ Guardian Bot 🆕', `set:guardian:${chatId}`)], [telegraf_1.Markup.button.callback('📬 Approval mode', `set:approval:${chatId}`)], [telegraf_1.Markup.button.callback('🗑 Deleting Messages', `set:delete:${chatId}`)], [telegraf_1.Markup.button.callback('🇬🇧 Lang', `set:lang:${chatId}`), telegraf_1.Markup.button.callback('✅ Close', 'ui:close'), telegraf_1.Markup.button.callback('▶️ Other', `set:other:${chatId}`)]]);
 const permissions = ['manage_settings', 'moderate', 'filters', 'welcome', 'broadcast', 'tickets', 'analytics', 'custom_commands', 'points', 'logs'];
 const pendingWelcomePhoto = new Map();
 const callbackError = async (ctx, error) => { console.error('Callback error:', error); try {
@@ -40,6 +41,9 @@ async function showOwner(ctx, text = '👑 *OSAMU GROUP V999 OWNER CENTER*\n💙
 bot.on('my_chat_member', async (ctx) => { const chat = ctx.chat; if (chat.type !== 'group' && chat.type !== 'supergroup')
     return; await (0, access_1.ensureGroup)(ctx); for (const ownerId of access_1.ownerIds)
     await ctx.telegram.sendMessage(ownerId, `🔔 New group access request\n💙 ${chat.title || chat.id}`, telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('✅ Approve', `owner:approve:${chat.id}`), telegraf_1.Markup.button.callback('❌ Reject', `owner:reject:${chat.id}`)]])); });
+bot.command('settings', async (ctx) => { const chat = ctx.chat; if (chat.type !== 'group' && chat.type !== 'supergroup')
+    return; if (!(await (0, access_1.requireApproved)(ctx)))
+    return; const g = await models_1.Group.findOne({ chatId: chat.id }); await ctx.reply(`⚙️ SETTINGS\nGroup: ${g?.title || chat.title || chat.id}\n\nSelect one of the settings that you want to change.`, settingsPanel(chat.id)); });
 bot.command('approved', async (ctx) => { const chat = ctx.chat; if (chat.type !== 'group' && chat.type !== 'supergroup')
     return ctx.reply('ဒီ button-only approval ကို group ထဲမှာပဲ အသုံးပြုပါ။'); const sender = await ctx.telegram.getChatMember(chat.id, ctx.from.id); if (sender.status !== 'creator')
     return ctx.reply('⛔ Group creator သာ `/approved` လုပ်နိုင်ပါတယ်။'); const group = await (0, access_1.ensureGroup)(ctx); await models_1.Group.updateOne({ chatId: chat.id }, { $set: { approved: true, approvedBy: ctx.from.id, approvedAt: new Date(), title: chat.title || group?.title || String(chat.id) } }, { upsert: true }); await log(chat.id, ctx.from.id, 'group_owner_approved'); await ctx.reply(`✅ ${chat.title || 'ဒီ group'} ကို group owner က approve လုပ်ပြီးပါပြီ။\n💙 Bot features အားလုံးကို အခုအသုံးပြုနိုင်ပါပြီ။`, { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🛡 Open controls', `owner:group:${chat.id}`)]]) }); });
@@ -61,7 +65,7 @@ bot.action(/^owner:group:(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(
     return ctx.answerCbQuery('Owner only'); const chatId = Number(ctx.match[1]); const g = await models_1.Group.findOne({ chatId }); await ctx.editMessageText(`💙 GROUP CONTROL\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Pending'}`, { ...groupPanel(chatId) }); await ctx.answerCbQuery('Opened'); });
 bot.action(/^owner:(approve|reject):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
     return ctx.answerCbQuery('Owner only'); const approved = ctx.match[1] === 'approve'; const chatId = Number(ctx.match[2]); await models_1.Group.updateOne({ chatId }, { $set: { approved, approvedBy: ctx.from.id, approvedAt: new Date() } }, { upsert: true }); await ctx.answerCbQuery(approved ? 'Approved' : 'Rejected'); await ctx.editMessageText(approved ? '✅ Group approved and activated.' : '❌ Group rejected.', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🗂 Open groups', 'owner:groups'), telegraf_1.Markup.button.callback('🔙 Owner menu', 'owner:home')]]) }); });
-bot.action(/^group:(home|moderation|welcome|security|admins|points|analytics|approve|disable):(-?\d+)$/, async (ctx) => {
+bot.action(/^group:(home|settings|moderation|welcome|security|admins|points|analytics|approve|disable):(-?\d+)$/, async (ctx) => {
     if (!(0, access_1.isOwner)(ctx.from.id))
         return ctx.answerCbQuery('Owner only');
     const mode = ctx.match[1];
@@ -76,6 +80,10 @@ bot.action(/^group:(home|moderation|welcome|security|admins|points|analytics|app
     if (mode === 'home') {
         const g = await models_1.Group.findOne({ chatId });
         await ctx.editMessageText(`💙 GROUP CONTROL\n${g?.title || chatId}\nStatus: ${g?.approved ? '🟢 Approved' : '🔴 Pending'}`, { ...groupPanel(chatId) });
+    }
+    else if (mode === 'settings') {
+        const g = await models_1.Group.findOne({ chatId });
+        await ctx.editMessageText(`⚙️ SETTINGS\nGroup: ${g?.title || chatId}\n\nSelect one of the settings that you want to change.`, { ...settingsPanel(chatId) });
     }
     else if (mode === 'security')
         await ctx.editMessageText('🚨 *SECURITY CENTER*\nToggle protections below', { parse_mode: 'Markdown', ...togglePanel(chatId) });
@@ -93,6 +101,8 @@ bot.action(/^group:(home|moderation|welcome|security|admins|points|analytics|app
         await ctx.editMessageText('🏆 *POINTS CENTER*\nPoints and levels module ready for configuration.', { parse_mode: 'Markdown', ...(0, ui_1.backKeyboard)(`group:home:${chatId}`) });
     await ctx.answerCbQuery();
 });
+bot.action(/^set:(regulation|antispam|antiflood|goodbye|alphabets|captcha|checks|admin|blocks|media|porn|warns|night|tag|link|guardian|approval|delete|lang|other):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
+    return ctx.answerCbQuery('Owner only'); const key = ctx.match[1]; const chatId = Number(ctx.match[2]); const field = `settings.${key}`; const current = Boolean((await models_1.Group.findOne({ chatId }))?.get(field)); await models_1.Group.updateOne({ chatId }, { $set: { [field]: !current } }, { upsert: true }); await log(chatId, ctx.from.id, `settings_${key}_${!current ? 'on' : 'off'}`); await ctx.answerCbQuery(`${key}: ${!current ? 'ON' : 'OFF'}`); const g = await models_1.Group.findOne({ chatId }); await ctx.editMessageText(`⚙️ SETTINGS\\nGroup: ${g?.title || chatId}\\n\\n${key} is now ${!current ? '🟢 ON' : '🔴 OFF'}\\n\\nSelect one of the settings that you want to change.`, { ...settingsPanel(chatId) }); });
 bot.action(/^toggle:(link|flood|verify|autodelete|raid):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
     return ctx.answerCbQuery('Owner only'); const key = ctx.match[1]; const chatId = Number(ctx.match[2]); const path = { link: 'settings.linkFilter', flood: 'settings.antiFlood', verify: 'settings.verification', autodelete: 'settings.autoDeleteCommands' }; if (key === 'raid') {
     await log(chatId, ctx.from.id, 'anti_raid_enabled');
@@ -100,13 +110,39 @@ bot.action(/^toggle:(link|flood|verify|autodelete|raid):(-?\d+)$/, async (ctx) =
     return ctx.editMessageText('🚨 Anti-raid protection is enabled.', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔙 Security', `group:security:${chatId}`)]]) });
 } const field = path[key]; const g = await models_1.Group.findOne({ chatId }); if (!g || !field)
     return ctx.answerCbQuery('Group setting not found'); const current = Boolean(g.get(field)); await models_1.Group.updateOne({ chatId }, { $set: { [field]: !current } }); await log(chatId, ctx.from.id, `toggle_${key}`, undefined); await ctx.answerCbQuery(`${key}: ${!current ? 'ON' : 'OFF'}`); await ctx.editMessageText(`🚨 *SECURITY CENTER*\n${key} is now ${!current ? '🟢 ON' : '🔴 OFF'}`, { parse_mode: 'Markdown', ...togglePanel(chatId) }); });
-bot.action(/^welcome:(blue|premium|format|photo|verify):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
-    return ctx.answerCbQuery('Owner only'); const type = ctx.match[1]; const chatId = Number(ctx.match[2]); const templates = { blue: '💙 မင်္ဂလာပါ {mention}\n{chat_title} မှ ကြိုဆိုပါတယ်။\nစည်းကမ်းများကို လိုက်နာပေးပါ။', premium: '✨ Welcome {mention}\nYou are now part of {chat_title}.\nEnjoy the premium community 💙', format: '🧾 Variables: {mention} {first_name} {username} {user_id} {chat_title} {count}', photo: '🖼️ Photo upload state ready — send a photo now.', verify: '🔘 Verification button enabled.' }; if (type === 'blue' || type === 'premium')
-    await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeText': templates[type], 'settings.welcome': true } }); if (type === 'photo') {
+bot.action(/^welcome:(blue|premium|format|photo|verify|text|see|media|mediasee|url|urlsee|below|preview|topic):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
+    return ctx.answerCbQuery('Owner only'); const type = ctx.match[1]; const chatId = Number(ctx.match[2]); const back = { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔙 Welcome menu', `group:welcome:${chatId}`)]]) }; if (type === 'photo' || type === 'media') {
     pendingWelcomePhoto.set(ctx.from.id, chatId);
     await ctx.answerCbQuery('Photo ပို့ပါ');
-    return ctx.editMessageText('🖼️ ဒီ chat ထဲကို welcome photo တစ်ပုံ ပို့ပါ။ ပို့ပြီးတာနဲ့ MongoDB ထဲ သိမ်းပေးမယ်။', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔙 Welcome menu', `group:welcome:${chatId}`)]]) });
-} await ctx.editMessageText(templates[type], { reply_markup: (0, ui_1.backKeyboard)(`group:welcome:${chatId}`) }); await ctx.answerCbQuery('Saved'); });
+    return ctx.editMessageText('📸 ဒီ chat ထဲကို welcome photo ပို့ပါ။ ပို့ပြီးတာနဲ့ MongoDB မှာ သိမ်းပေးမယ်။', back);
+} if (type === 'blue' || type === 'text') {
+    const text = '💙 မင်္ဂလာပါ {mention}\\n{chat_title} မှ ကြိုဆိုပါတယ်။\\nစည်းကမ်းများကို လိုက်နာပေးပါ။';
+    await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeText': text, 'settings.welcome': true } });
+    return ctx.editMessageText(`📄 Text ✅\\n\\n${text}\\n\\nစာသားကို MongoDB ထဲသိမ်းပြီးပါပြီ။`, back);
+} if (type === 'premium') {
+    const text = '✨ Welcome {mention}\\nYou are now part of {chat_title}.\\nEnjoy the premium community 💙';
+    await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeText': text, 'settings.welcome': true } });
+    return ctx.editMessageText(`✨ Premium text saved.\\n\\n${text}`, back);
+} if (type === 'format')
+    return ctx.editMessageText('🧾 FORMAT VARIABLES\\n\\n{mention} {first_name} {username} {user_id} {chat_title} {count}', back); if (type === 'see' || type === 'mediasee' || type === 'urlsee') {
+    const g = await models_1.Group.findOne({ chatId });
+    return ctx.editMessageText(`👀 PREVIEW\\n\\n${g?.settings?.welcomeText || 'Welcome text မသတ်မှတ်ရသေးပါ။'}\\n\\n📸 Media: ${g?.settings?.welcomePhoto ? '✅' : '❌'}\\n🔤 URL Buttons: ${g?.settings?.welcomeUrlButtons ? '✅' : '❌'}`, back);
+} if (type === 'url') {
+    await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeUrlButtons': true } });
+    return ctx.editMessageText('🔤 URL Buttons ✅\\n\\nURL button mode ဖွင့်ပြီးပါပြီ။ Button URL ကို နောက်တစ်ဆင့်မှာ ထည့်နိုင်ပါတယ်။', back);
+} if (type === 'below') {
+    const g = await models_1.Group.findOne({ chatId });
+    const next = !Boolean(g?.settings?.mediaBelowText);
+    await models_1.Group.updateOne({ chatId }, { $set: { 'settings.mediaBelowText': next } });
+    return ctx.editMessageText(`🖼️ Media below text ${next ? '✅' : '❌'}`, back);
+} if (type === 'preview') {
+    const g = await models_1.Group.findOne({ chatId });
+    return ctx.reply(`👀 FULL PREVIEW\\n\\n${g?.settings?.welcomeText || 'Welcome text မသတ်မှတ်ရသေးပါ။'}`, back);
+} if (type === 'topic')
+    return ctx.editMessageText('🗂 SELECT A TOPIC\\n\\nGeneral ✅\\nAnnouncements ✅\\nSupport ✅', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('General', `welcome:topic_general:${chatId}`)], [telegraf_1.Markup.button.callback('Announcements', `welcome:topic_announcements:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Back', `group:welcome:${chatId}`)]]) }); if (type === 'verify') {
+    await models_1.Group.updateOne({ chatId }, { $set: { 'settings.verification': true } });
+    return ctx.editMessageText('✅ Verification button enabled.', back);
+} await ctx.answerCbQuery('Done'); });
 bot.action(/^mod:(lock|unlock|purge|slow):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
     return ctx.answerCbQuery('Owner only'); const action = ctx.match[1]; const chatId = Number(ctx.match[2]); await log(chatId, ctx.from.id, `moderation_${action}`); await ctx.answerCbQuery(`${action} saved`); await ctx.editMessageText(`✅ ${action.toUpperCase()} setting saved for ${chatId}.`, { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔙 Moderation', `group:moderation:${chatId}`), telegraf_1.Markup.button.callback('🏠 Group menu', `group:home:${chatId}`)]]) }); });
 bot.action(/^admins:(list|grant|revoke):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))

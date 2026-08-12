@@ -4,7 +4,7 @@ export type Permission = 'manage_settings' | 'moderate' | 'filters' | 'welcome' 
 
 export interface IGroup extends Document {
   chatId: number; title: string; approved: boolean; approvedBy?: number; approvedAt?: Date;
-  settings: { welcome: boolean; welcomeText: string; welcomePhoto?: string; rules?: string; verification: boolean; verificationTimeout: number; antiFlood: boolean; floodLimit: number; linkFilter: boolean; badWords: string[]; autoDeleteCommands: boolean; logChatId?: number; blueTheme: boolean; language: 'my' | 'en' | 'both' };
+  settings: { welcome: boolean; welcomeText: string; welcomePhoto?: string; welcomeUrlButtons?: boolean; mediaBelowText?: boolean; rules?: string; verification: boolean; verificationTimeout: number; antiFlood: boolean; floodLimit: number; linkFilter: boolean; badWords: string[]; autoDeleteCommands: boolean; logChatId?: number; blueTheme: boolean; language: 'my' | 'en' | 'both'; [key: string]: unknown };
   stats: { joins: number; leaves: number; warnings: number; actions: number };
 }
 export interface IAdmin extends Document { chatId: number; userId: number; displayName: string; permissions: Permission[]; grantedBy: number; active: boolean; }
@@ -14,7 +14,7 @@ export interface ILog extends Document { chatId: number; actorId: number; target
 const GroupSchema = new Schema<IGroup>({
   chatId: { type: Number, unique: true, index: true, required: true }, title: { type: String, required: true },
   approved: { type: Boolean, default: false }, approvedBy: Number, approvedAt: Date,
-  settings: { welcome: { type: Boolean, default: true }, welcomeText: { type: String, default: 'မင်္ဂလာပါ {mention} 💙\nကျွန်တော်တို့ group မှ ကြိုဆိုပါတယ်။' }, welcomePhoto: String, rules: String, verification: { type: Boolean, default: true }, verificationTimeout: { type: Number, default: 120 }, antiFlood: { type: Boolean, default: true }, floodLimit: { type: Number, default: 5 }, linkFilter: { type: Boolean, default: false }, badWords: { type: [String], default: [] }, autoDeleteCommands: { type: Boolean, default: false }, logChatId: Number, blueTheme: { type: Boolean, default: true }, language: { type: String, enum: ['my', 'en', 'both'], default: 'my' } },
+  settings: { welcome: { type: Boolean, default: true }, welcomeText: { type: String, default: 'မင်္ဂလာပါ {mention} 💙\nကျွန်တော်တို့ group မှ ကြိုဆိုပါတယ်။' }, welcomePhoto: String, welcomeUrlButtons: { type: Boolean, default: false }, mediaBelowText: { type: Boolean, default: false }, rules: String, verification: { type: Boolean, default: true }, verificationTimeout: { type: Number, default: 120 }, antiFlood: { type: Boolean, default: true }, floodLimit: { type: Number, default: 5 }, linkFilter: { type: Boolean, default: false }, badWords: { type: [String], default: [] }, autoDeleteCommands: { type: Boolean, default: false }, logChatId: Number, blueTheme: { type: Boolean, default: true }, language: { type: String, enum: ['my', 'en', 'both'], default: 'my' } },
   stats: { joins: { type: Number, default: 0 }, leaves: { type: Number, default: 0 }, warnings: { type: Number, default: 0 }, actions: { type: Number, default: 0 } }
 }, { timestamps: true });
 const AdminSchema = new Schema<IAdmin>({ chatId: { type: Number, index: true, required: true }, userId: { type: Number, required: true }, displayName: String, permissions: { type: [String], default: [] }, grantedBy: Number, active: { type: Boolean, default: true } }, { timestamps: true });
