@@ -34,6 +34,7 @@ Every inline button is now connected to a callback handler with owner authorizat
 | Command | Purpose |
 |---|---|
 | Any private message from owner | Opens the owner control center |
+| `/approved` from the Telegram group creator | Activates that group after Telegram creator verification; this is the only approval exception to the button-only UI |
 | Group added event | Sends an approval button to the owner |
 | Group approval button | Activates the selected group |
 | Group selector button | Opens per-group controls |

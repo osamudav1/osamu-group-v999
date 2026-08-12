@@ -25,6 +25,6 @@ export async function hasPermission(chatId: number, userId: number, permission: 
 export async function requireApproved(ctx: Context): Promise<boolean> {
   if (ctx.chat?.type === 'private') return true;
   const ok = await isApproved(ctx.chat?.id);
-  if (!ok) { await ctx.reply('🔒 ဒီ group ကို Owner မှ approve မလုပ်ရသေးပါ။ Owner ကို `/request_access` ပို့ခိုင်းပါ။'); return false; }
+  if (!ok) { await ctx.reply('🔒 ဒီ group ကို မ activate ရသေးပါ။ Group creator က `/approved` ပို့ပြီး approve လုပ်ပါ။'); return false; }
   return true;
 }

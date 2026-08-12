@@ -32,7 +32,7 @@ async function requireApproved(ctx) {
         return true;
     const ok = await isApproved(ctx.chat?.id);
     if (!ok) {
-        await ctx.reply('🔒 ဒီ group ကို Owner မှ approve မလုပ်ရသေးပါ။ Owner ကို `/request_access` ပို့ခိုင်းပါ။');
+        await ctx.reply('🔒 ဒီ group ကို မ activate ရသေးပါ။ Group creator က `/approved` ပို့ပြီး approve လုပ်ပါ။');
         return false;
     }
     return true;
