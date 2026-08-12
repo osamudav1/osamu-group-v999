@@ -5,8 +5,9 @@ services:
     plan: free
     region: singapore
     branch: master
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    rootDir: .
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start
     healthCheckPath: /health
     autoDeploy: true
     envVars:

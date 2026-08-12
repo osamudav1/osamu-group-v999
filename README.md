@@ -21,9 +21,9 @@ For development, use `npm run dev`.
 
 ## Render deployment
 
-This repository includes `render.yaml`. In Render, choose **New Blueprint**, connect this private repository, and deploy the blueprint. The service listens on Render's `PORT` value, binds to `0.0.0.0`, and exposes `GET /health` for health checks. The root path also returns a small JSON readiness response.
+This repository includes `render.yaml`. In Render, choose **New Blueprint**, connect this private repository, and deploy the blueprint. Ensure the service root directory is the repository root, not `src/`. The service listens on Render's `PORT` value, binds to `0.0.0.0`, and exposes `GET /health` for health checks. The root path also returns a small JSON readiness response.
 
-Set these secret environment variables in Render: `BOT_TOKEN`, `MONGODB_URI`, and `OWNER_IDS`. `PORT` is set to `10000` by the blueprint but the application also respects any port supplied by Render. The build command is `npm ci && npm run build`, and the start command is `npm start`.
+Set these secret environment variables in Render: `BOT_TOKEN`, `MONGODB_URI`, and `OWNER_IDS`. `PORT` is set to `10000` by the blueprint but the application also respects any port supplied by Render. The build command is `npm ci --include=dev && npm run build`, and the start command is `npm run start`. The start script also runs `npm run build` before launching, so `dist/index.js` is recreated even if a Render service was previously saved with an outdated build command.
 
 MongoDB Atlas should allow the Render service's outbound network access and use a database user with a strong password. Do not commit the real bot token or MongoDB URI.
 
