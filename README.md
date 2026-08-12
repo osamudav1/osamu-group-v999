@@ -19,6 +19,14 @@ The current foundation includes owner approval, owner panel, granular moderation
 
 For development, use `npm run dev`.
 
+## Render deployment
+
+This repository includes `render.yaml`. In Render, choose **New Blueprint**, connect this private repository, and deploy the blueprint. The service listens on Render's `PORT` value, binds to `0.0.0.0`, and exposes `GET /health` for health checks. The root path also returns a small JSON readiness response.
+
+Set these secret environment variables in Render: `BOT_TOKEN`, `MONGODB_URI`, and `OWNER_IDS`. `PORT` is set to `10000` by the blueprint but the application also respects any port supplied by Render. The build command is `npm ci && npm run build`, and the start command is `npm start`.
+
+MongoDB Atlas should allow the Render service's outbound network access and use a database user with a strong password. Do not commit the real bot token or MongoDB URI.
+
 ## Button-only interaction map
 
 | Command | Purpose |

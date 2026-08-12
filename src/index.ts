@@ -1,10 +1,11 @@
 import 'dotenv/config';
+import http from 'node:http';
 import { Telegraf, Context, Markup } from 'telegraf';
 import { connectMongo, Group, Admin, User, ModLog } from './models';
 import { ownerIds, isOwner, ensureGroup, isApproved, hasPermission, requireApproved } from './services/access';
 import { mainKeyboard, backKeyboard, formatText } from './utils/ui';
 
-const token = process.env.BOT_TOKEN; const mongoUri = process.env.MONGODB_URI;
+const token = process.env.BOT_TOKEN; const mongoUri = process.env.MONGODB_URI; const port = Number(process.env.PORT || 10000);
 if (!token || !mongoUri) throw new Error('BOT_TOKEN and MONGODB_URI are required');
 const bot = new Telegraf(token);
 const ownerPanel = () => Markup.inlineKeyboard([[Markup.button.callback('🗂 Groups', 'owner:groups'), Markup.button.callback('📊 Overview', 'owner:overview')], [Markup.button.callback('🛡 Moderation', 'owner:moderation'), Markup.button.callback('👮 Permissions', 'owner:permissions')], [Markup.button.callback('👋 Welcome', 'owner:welcome'), Markup.button.callback('🚨 Security', 'owner:security')], [Markup.button.callback('📢 Broadcast', 'owner:broadcast'), Markup.button.callback('⚙ Global Settings', 'owner:settings')]]);
@@ -37,5 +38,7 @@ bot.action(/^admins:(list|grant|revoke):(-?\d+)$/, async ctx => { if (!isOwner(c
 bot.action(/^verify:(\d+)$/, async ctx => { if (ctx.from.id !== Number(ctx.match[1])) return ctx.answerCbQuery('Not your button'); await ctx.editMessageText(`✅ Verified — ${ctx.from.first_name} ကြိုဆိုပါတယ် 💙`); await ctx.answerCbQuery('Verified'); });
 bot.action('ui:close', async ctx => { await ctx.deleteMessage().catch(() => undefined); await ctx.answerCbQuery(); });
 bot.catch(err => console.error('Bot error:', err));
-(async () => { await connectMongo(mongoUri); await bot.launch(); console.log('OSAMU GROUP V999 button-only started'); })();
-process.once('SIGINT', () => bot.stop('SIGINT')); process.once('SIGTERM', () => bot.stop('SIGTERM'));
+const healthServer = http.createServer((req, res) => { if (req.url === '/health' || req.url === '/') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ ok: true, service: 'osamu-group-v999', mode: 'button-only', timestamp: new Date().toISOString() })); return; } res.writeHead(404, { 'content-type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: 'not_found' })); });
+healthServer.listen(port, '0.0.0.0', () => console.log(`Health server listening on ${port}`));
+(async () => { await connectMongo(mongoUri); await bot.launch(); console.log('OSAMU GROUP V999 button-only started'); })().catch(err => { console.error('Startup failed:', err); process.exit(1); });
+const shutdown = (signal: string) => { healthServer.close(); try { bot.stop(signal); } catch (error) { console.warn('Bot shutdown notice:', (error as Error).message); } }; process.once('SIGINT', () => shutdown('SIGINT')); process.once('SIGTERM', () => shutdown('SIGTERM'));
