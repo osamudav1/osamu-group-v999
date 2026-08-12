@@ -22,6 +22,8 @@ const welcomePanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.M
 const settingsPanel = (chatId) => telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('📜 Regulation', `set:regulation:${chatId}`), telegraf_1.Markup.button.callback('📨 Anti-Spam', `set:antispam:${chatId}`)], [telegraf_1.Markup.button.callback('💬 Welcome', `group:welcome:${chatId}`), telegraf_1.Markup.button.callback('🌊 Anti-Flood', `set:antiflood:${chatId}`)], [telegraf_1.Markup.button.callback('👋 Goodbye', `set:goodbye:${chatId}`), telegraf_1.Markup.button.callback('🕉 Alphabets', `set:alphabets:${chatId}`)], [telegraf_1.Markup.button.callback('🧠 Captcha', `set:captcha:${chatId}`), telegraf_1.Markup.button.callback('🔦 Checks', `set:checks:${chatId}`)], [telegraf_1.Markup.button.callback('🆘 @Admin', `set:admin:${chatId}`), telegraf_1.Markup.button.callback('🔐 Blocks', `set:blocks:${chatId}`)], [telegraf_1.Markup.button.callback('📸 Media', `set:media:${chatId}`), telegraf_1.Markup.button.callback('🔞 Porn', `set:porn:${chatId}`)], [telegraf_1.Markup.button.callback('❗ Warns', `set:warns:${chatId}`), telegraf_1.Markup.button.callback('🌙 Night', `set:night:${chatId}`)], [telegraf_1.Markup.button.callback('🔔 Tag', `set:tag:${chatId}`), telegraf_1.Markup.button.callback('🔗 Link', `set:link:${chatId}`)], [telegraf_1.Markup.button.callback('🕵️ Guardian Bot 🆕', `set:guardian:${chatId}`)], [telegraf_1.Markup.button.callback('📬 Approval mode', `set:approval:${chatId}`)], [telegraf_1.Markup.button.callback('🗑 Deleting Messages', `set:delete:${chatId}`)], [telegraf_1.Markup.button.callback('🇬🇧 Lang', `set:lang:${chatId}`), telegraf_1.Markup.button.callback('✅ Close', 'ui:close'), telegraf_1.Markup.button.callback('▶️ Other', `set:other:${chatId}`)]]);
 const permissions = ['manage_settings', 'moderate', 'filters', 'welcome', 'broadcast', 'tickets', 'analytics', 'custom_commands', 'points', 'logs'];
 const pendingWelcomePhoto = new Map();
+const pendingWelcomeText = new Map();
+const pendingWelcomeUrl = new Map();
 const callbackError = async (ctx, error) => { console.error('Callback error:', error); try {
     await ctx.answerCbQuery('လုပ်ဆောင်မှု မအောင်မြင်ပါ။ ပြန်စမ်းပါ။');
 }
@@ -49,7 +51,26 @@ bot.command('approved', async (ctx) => { const chat = ctx.chat; if (chat.type !=
     return ctx.reply('⛔ Group creator သာ `/approved` လုပ်နိုင်ပါတယ်။'); const group = await (0, access_1.ensureGroup)(ctx); await models_1.Group.updateOne({ chatId: chat.id }, { $set: { approved: true, approvedBy: ctx.from.id, approvedAt: new Date(), title: chat.title || group?.title || String(chat.id) } }, { upsert: true }); await log(chat.id, ctx.from.id, 'group_owner_approved'); await ctx.reply(`✅ ${chat.title || 'ဒီ group'} ကို group owner က approve လုပ်ပြီးပါပြီ။\n💙 Bot features အားလုံးကို အခုအသုံးပြုနိုင်ပါပြီ။`, { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🛡 Open controls', `owner:group:${chat.id}`)]]) }); });
 bot.on('photo', async (ctx) => { if (!(0, access_1.isOwner)(ctx.from?.id))
     return; const chatId = pendingWelcomePhoto.get(ctx.from.id); if (!chatId)
-    return; const photos = ctx.message.photo; const photo = photos[photos.length - 1]; await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomePhoto': photo.file_id } }); pendingWelcomePhoto.delete(ctx.from.id); await ctx.reply('✅ Welcome photo သိမ်းပြီးပါပြီ။', { reply_markup: (0, ui_1.backKeyboard)(`group:welcome:${chatId}`) }); });
+    return; const photos = ctx.message.photo; const photo = photos[photos.length - 1]; await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomePhoto': photo.file_id, 'settings.welcome': true } }); pendingWelcomePhoto.delete(ctx.from.id); await ctx.reply('✅ Welcome photo သိမ်းပြီးပါပြီ။', { reply_markup: (0, ui_1.backKeyboard)(`group:welcome:${chatId}`) }); });
+bot.on('text', async (ctx) => { if (!(0, access_1.isOwner)(ctx.from?.id))
+    return; const text = ctx.message.text; if (text.startsWith('/'))
+    return; const textChatId = pendingWelcomeText.get(ctx.from.id); if (textChatId) {
+    await models_1.Group.updateOne({ chatId: textChatId }, { $set: { 'settings.welcomeText': text, 'settings.welcome': true } });
+    pendingWelcomeText.delete(ctx.from.id);
+    return ctx.reply('✅ Welcome စာသားအသစ် သိမ်းပြီးပါပြီ။', { reply_markup: (0, ui_1.backKeyboard)(`group:welcome:${textChatId}`) });
+} const urlChatId = pendingWelcomeUrl.get(ctx.from.id); if (urlChatId) {
+    const parts = text.split('|').map(value => value.trim());
+    const label = parts[0];
+    const url = parts.slice(1).join('|');
+    if (!label || !/^https?:\/\//i.test(url))
+        return ctx.reply('⚠️ Format မှားနေပါတယ်။ Button Name | https://example.com ပုံစံနဲ့ ပြန်ပို့ပါ။');
+    const group = await models_1.Group.findOne({ chatId: urlChatId });
+    const buttons = Array.isArray(group?.settings?.welcomeButtons) ? [...group.settings.welcomeButtons] : [];
+    buttons.push({ text: label.slice(0, 64), url });
+    await models_1.Group.updateOne({ chatId: urlChatId }, { $set: { 'settings.welcomeUrlButtons': true, 'settings.welcomeButtons': buttons } });
+    pendingWelcomeUrl.delete(ctx.from.id);
+    return ctx.reply(`✅ URL button သိမ်းပြီးပါပြီ။\\n\\n${label}`, { reply_markup: (0, ui_1.backKeyboard)(`group:welcome:${urlChatId}`) });
+} });
 bot.on('message', async (ctx) => { if (ctx.chat?.type === 'private') {
     if ((0, access_1.isOwner)(ctx.from?.id))
         return showOwner(ctx);
@@ -110,15 +131,19 @@ bot.action(/^toggle:(link|flood|verify|autodelete|raid):(-?\d+)$/, async (ctx) =
     return ctx.editMessageText('🚨 Anti-raid protection is enabled.', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔙 Security', `group:security:${chatId}`)]]) });
 } const field = path[key]; const g = await models_1.Group.findOne({ chatId }); if (!g || !field)
     return ctx.answerCbQuery('Group setting not found'); const current = Boolean(g.get(field)); await models_1.Group.updateOne({ chatId }, { $set: { [field]: !current } }); await log(chatId, ctx.from.id, `toggle_${key}`, undefined); await ctx.answerCbQuery(`${key}: ${!current ? 'ON' : 'OFF'}`); await ctx.editMessageText(`🚨 *SECURITY CENTER*\n${key} is now ${!current ? '🟢 ON' : '🔴 OFF'}`, { parse_mode: 'Markdown', ...togglePanel(chatId) }); });
-bot.action(/^welcome:(blue|premium|format|photo|verify|text|see|media|mediasee|url|urlsee|below|preview|topic):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
+bot.action(/^welcome:(blue|premium|format|photo|verify|text|see|media|mediasee|url|urlsee|below|preview|topic|topic_general|topic_announcements|topic_support):(-?\d+)$/, async (ctx) => { if (!(0, access_1.isOwner)(ctx.from.id))
     return ctx.answerCbQuery('Owner only'); const type = ctx.match[1]; const chatId = Number(ctx.match[2]); const back = { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('🔙 Welcome menu', `group:welcome:${chatId}`)]]) }; if (type === 'photo' || type === 'media') {
     pendingWelcomePhoto.set(ctx.from.id, chatId);
     await ctx.answerCbQuery('Photo ပို့ပါ');
     return ctx.editMessageText('📸 ဒီ chat ထဲကို welcome photo ပို့ပါ။ ပို့ပြီးတာနဲ့ MongoDB မှာ သိမ်းပေးမယ်။', back);
-} if (type === 'blue' || type === 'text') {
+} if (type === 'text') {
+    pendingWelcomeText.set(ctx.from.id, chatId);
+    await ctx.answerCbQuery('စာသားပို့ပါ');
+    return ctx.editMessageText('📄 Welcome စာသားအသစ်ကို ဒီ chat ထဲ ပို့ပါ။\\n\\nရနိုင်သော format: {mention} {first_name} {username} {user_id} {chat_title} {count}', back);
+} if (type === 'blue') {
     const text = '💙 မင်္ဂလာပါ {mention}\\n{chat_title} မှ ကြိုဆိုပါတယ်။\\nစည်းကမ်းများကို လိုက်နာပေးပါ။';
     await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeText': text, 'settings.welcome': true } });
-    return ctx.editMessageText(`📄 Text ✅\\n\\n${text}\\n\\nစာသားကို MongoDB ထဲသိမ်းပြီးပါပြီ။`, back);
+    return ctx.editMessageText(`📄 Default text saved.\\n\\n${text}`, back);
 } if (type === 'premium') {
     const text = '✨ Welcome {mention}\\nYou are now part of {chat_title}.\\nEnjoy the premium community 💙';
     await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeText': text, 'settings.welcome': true } });
@@ -126,10 +151,13 @@ bot.action(/^welcome:(blue|premium|format|photo|verify|text|see|media|mediasee|u
 } if (type === 'format')
     return ctx.editMessageText('🧾 FORMAT VARIABLES\\n\\n{mention} {first_name} {username} {user_id} {chat_title} {count}', back); if (type === 'see' || type === 'mediasee' || type === 'urlsee') {
     const g = await models_1.Group.findOne({ chatId });
-    return ctx.editMessageText(`👀 PREVIEW\\n\\n${g?.settings?.welcomeText || 'Welcome text မသတ်မှတ်ရသေးပါ။'}\\n\\n📸 Media: ${g?.settings?.welcomePhoto ? '✅' : '❌'}\\n🔤 URL Buttons: ${g?.settings?.welcomeUrlButtons ? '✅' : '❌'}`, back);
+    const buttons = Array.isArray(g?.settings?.welcomeButtons) ? g.settings.welcomeButtons : [];
+    const buttonText = buttons.length ? buttons.map(button => `🔗 ${button.text} — ${button.url}`).join('\\n') : 'မရှိသေးပါ';
+    return ctx.editMessageText(`👀 PREVIEW\\n\\n${g?.settings?.welcomeText || 'Welcome text မသတ်မှတ်ရသေးပါ။'}\\n\\n📸 Media: ${g?.settings?.welcomePhoto ? '✅' : '❌'}\\n🔤 URL Buttons: ${buttons.length ? '✅' : '❌'}\\n${buttonText}`, back);
 } if (type === 'url') {
-    await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeUrlButtons': true } });
-    return ctx.editMessageText('🔤 URL Buttons ✅\\n\\nURL button mode ဖွင့်ပြီးပါပြီ။ Button URL ကို နောက်တစ်ဆင့်မှာ ထည့်နိုင်ပါတယ်။', back);
+    pendingWelcomeUrl.set(ctx.from.id, chatId);
+    await ctx.answerCbQuery('Button format ပို့ပါ');
+    return ctx.editMessageText('🔤 URL button အသစ်ထည့်ရန် ဒီ format နဲ့ပို့ပါ။\\n\\nButton Name | https://example.com', back);
 } if (type === 'below') {
     const g = await models_1.Group.findOne({ chatId });
     const next = !Boolean(g?.settings?.mediaBelowText);
@@ -137,9 +165,22 @@ bot.action(/^welcome:(blue|premium|format|photo|verify|text|see|media|mediasee|u
     return ctx.editMessageText(`🖼️ Media below text ${next ? '✅' : '❌'}`, back);
 } if (type === 'preview') {
     const g = await models_1.Group.findOne({ chatId });
-    return ctx.reply(`👀 FULL PREVIEW\\n\\n${g?.settings?.welcomeText || 'Welcome text မသတ်မှတ်ရသေးပါ။'}`, back);
-} if (type === 'topic')
-    return ctx.editMessageText('🗂 SELECT A TOPIC\\n\\nGeneral ✅\\nAnnouncements ✅\\nSupport ✅', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('General', `welcome:topic_general:${chatId}`)], [telegraf_1.Markup.button.callback('Announcements', `welcome:topic_announcements:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Back', `group:welcome:${chatId}`)]]) }); if (type === 'verify') {
+    const buttons = Array.isArray(g?.settings?.welcomeButtons) ? g.settings.welcomeButtons : [];
+    const markup = buttons.length ? telegraf_1.Markup.inlineKeyboard(buttons.map(button => [telegraf_1.Markup.button.url(button.text, button.url)])) : back;
+    if (g?.settings?.welcomePhoto)
+        await ctx.replyWithPhoto(g.settings.welcomePhoto, { caption: g.settings.welcomeText || 'Welcome preview', ...markup });
+    else
+        await ctx.reply(g?.settings?.welcomeText || 'Welcome text မသတ်မှတ်ရသေးပါ။', markup);
+    return ctx.answerCbQuery('Preview');
+} if (type === 'topic' || type === 'topic_general' || type === 'topic_announcements' || type === 'topic_support') {
+    if (type !== 'topic') {
+        const topic = type.replace('topic_', '');
+        await models_1.Group.updateOne({ chatId }, { $set: { 'settings.welcomeTopic': topic } });
+        await ctx.answerCbQuery('Topic saved');
+        return ctx.editMessageText(`✅ Welcome topic ကို ${topic} အဖြစ် သိမ်းပြီးပါပြီ။`, back);
+    }
+    return ctx.editMessageText('🗂 SELECT A TOPIC', { ...telegraf_1.Markup.inlineKeyboard([[telegraf_1.Markup.button.callback('General', `welcome:topic_general:${chatId}`)], [telegraf_1.Markup.button.callback('Announcements', `welcome:topic_announcements:${chatId}`)], [telegraf_1.Markup.button.callback('Support', `welcome:topic_support:${chatId}`)], [telegraf_1.Markup.button.callback('🔙 Back', `group:welcome:${chatId}`)]]) });
+} if (type === 'verify') {
     await models_1.Group.updateOne({ chatId }, { $set: { 'settings.verification': true } });
     return ctx.editMessageText('✅ Verification button enabled.', back);
 } await ctx.answerCbQuery('Done'); });
