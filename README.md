@@ -29,6 +29,8 @@ MongoDB Atlas should allow the Render service's outbound network access and use 
 
 ## Button-only interaction map
 
+Every inline button is now connected to a callback handler with owner authorization, callback acknowledgement, database update where applicable, and an error fallback. Owner menu cards route to group selection, security toggles refresh their screen after saving, moderation buttons write audit logs, welcome photo starts a photo-upload state and stores the Telegram `file_id`, and admin grant/revoke opens a Telegram administrator picker. If an action fails, the callback is acknowledged and a visible recovery message is sent instead of leaving the button spinner running.
+
 | Command | Purpose |
 |---|---|
 | Any private message from owner | Opens the owner control center |
